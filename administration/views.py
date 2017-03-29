@@ -191,6 +191,11 @@ class ImportCourseView(APIView):
 
         stream = BytesIO(json_file.read())
         course_data = JSONParser().parse(stream)
+
+        # little adjust to fix name size (30)
+        for key, value in enumerate(course_data['course_authors']):
+            course_data['course_authors'][key]['name'] = value['name'][:30]
+
         course_slug = course_data.get('slug')
         try:
             course = Course.objects.get(slug=course_slug)
@@ -257,7 +262,8 @@ class ImportCourseView(APIView):
             course_obj.save()
 
             return Response({'new_course_url': reverse_lazy('administration.edit_course',
-                                                            kwargs={'course_id': course_serializer.object.id}),
+                                                            kwargs={'course_id': course_obj.id}),
                              })
         else:
+            print course_serializer.errors
             return Response({'error': 'invalid_file'})
